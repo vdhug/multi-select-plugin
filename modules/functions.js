@@ -12,6 +12,7 @@ export function init(element) {
     input.setAttribute("autocomplete", "off");
     input.setAttribute("tabindex", "0");
     input.addEventListener("keyup", inputChange);
+    input.addEventListener("keydown", deletePressed);
 
     const dropdown_icon = document.createElement("a");
     dropdown_icon.setAttribute("href", "#");
@@ -82,6 +83,7 @@ function createToken(wrapper, value) {
     close.classList.add("selected-close");
     close.setAttribute("tabindex", "-1");
     close.setAttribute("data-option", value);
+    close.setAttribute("data-hits", 0);
     close.setAttribute("href", "#");
     close.innerText = "x";
     close.addEventListener("click", removeToken)
@@ -142,8 +144,8 @@ function populateAutocompleteList(select, query, dropdown = false) {
         li.innerText = options_to_show[0];
         li.addEventListener("click", selectOption);
         autocomplete_list.appendChild(li);
-        if (query.length > (options_to_show[0].length * 0.6)) {
-            var event = new Event('click');
+        if (query.length == options_to_show[0].length) {
+            const event = new Event('click');
             li.dispatchEvent(event);
 
         }
@@ -156,6 +158,7 @@ function populateAutocompleteList(select, query, dropdown = false) {
         }
     } else {
         const li = document.createElement("li");
+        li.classList.add("not-cursor");
         li.innerText = "No options found";
         autocomplete_list.appendChild(li);
     }
@@ -170,7 +173,7 @@ function selectOption(e) {
     createToken(wrapper, e.target.innerText);
     input_search.value = "";
     input_search.focus();
-    var event = new Event('keyup');
+    const event = new Event('keyup');
     input_search.dispatchEvent(event);
     dropdown_icon.classList.remove("active");
     e.target.remove();
@@ -234,8 +237,36 @@ function removeToken(e) {
     // Remove token attribute
     e.target.parentNode.remove();
     input_search.focus();
-    var event = new Event('keyup');
+    const event = new Event('keyup');
     input_search.dispatchEvent(event);
+}
+
+function deletePressed(e) {
+    const wrapper = e.target.parentNode.parentNode;
+    const input_search = e.target;
+    const key = e.keyCode || e.charCode;
+    const tokens = wrapper.querySelectorAll(".selected-wrapper");
+    const last_token_x = tokens[tokens.length - 1].querySelector("a");
+    let hits = +last_token_x.dataset.hits;
+
+    if (key == 8 || key == 46) {
+        if (!input_search.value) {
+            debugger
+            if (hits > 1) {
+                // Trigger delete event
+                const event = new Event('click');
+                last_token_x.dispatchEvent(event);
+            } else {
+                last_token_x.dataset.hits = 2;
+            }
+
+        }
+    } else {
+        last_token_x.dataset.hits = 0;
+    }
+
+    return true;
+
 }
 
 
